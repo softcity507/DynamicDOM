@@ -7,15 +7,6 @@ import { draftFix } from './selfHeal.js';
 const SNAPSHOT_DIR = path.resolve('snapshots');
 const BASELINE_PATH = path.join(SNAPSHOT_DIR, 'baseline.yaml');
 
-/**
- * Compare Flow's live accessibility tree to the last known-good snapshot.
- * First run just saves a baseline. After that, any difference means Google
- * changed something: with ANTHROPIC_API_KEY set, Claude drafts the
- * flowPage.ts fix (never applied automatically — there's no git repo here
- * to fall back on, so it's printed/saved for review instead). Either way,
- * the new snapshot becomes the baseline so the next run diffs against what's
- * live now.
- */
 export async function checkDrift(flow: FlowPage): Promise<string> {
   await mkdir(SNAPSHOT_DIR, { recursive: true });
   const current = await flow.dumpAccessibilityTree();
