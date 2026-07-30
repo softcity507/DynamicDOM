@@ -10,7 +10,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "login": "tsx src/login.ts",
     "inspect": "tsx src/inspect.ts",
-    "detect-drift": "tsx src/detectDrift.ts",
+    "detect-drift": "tsx src/detectDrift.ts", 
     "capture-dom": "tsx src/captureDom.ts",
     "capture-dom-diff": "tsx src/diffDom.ts"
   },

@@ -4,7 +4,10 @@
  * Always captures fresh: whatever was in data/latest.json gets rotated to
  * data/previous.json first, then the live page is written to data/latest.json.
  * Run `npm run capture-dom-diff` afterward to see exactly what changed
- * between the two — that step needs no browser, just these two files.
+ * between the two — that step needs no browser, just these two files. If
+ * ANTHROPIC_API_KEY is set, it also asks Claude to judge which changes are
+ * real (a moved/renamed button, changed label) versus pure class-hash churn
+ * from a Google rebuild.
  */
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';

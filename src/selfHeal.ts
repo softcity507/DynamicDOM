@@ -98,3 +98,46 @@ export async function draftFix(oldSnapshot: string, newSnapshot: string, flowPag
   const text = message.content.find((b) => b.type === 'text');
   return text && text.type === 'text' ? text.text : '(no response)';
 }
+
+export interface DomSnapshotDiff {
+  added: Record<string, string>;
+  removed: Record<string, string>;
+  changed: Record<string, { before: string; after: string }>;
+}
+
+/**
+ * Ask Claude to judge a data/latest.json vs data/previous.json diff (id/class
+ * -> text map). Google's styled-components hashes shift on every rebuild
+ * even when nothing user-visible changed, so a raw key diff is full of noise;
+ * this asks Claude to separate that from real changes — a renamed/moved
+ * button, changed label text, a new or removed control — and flag whether
+ * flowPage.ts likely needs a locator update. Used by `npm run capture-dom-diff`.
+ */
+export async function analyzeDomDiff(diff: DomSnapshotDiff): Promise<string> {
+  const anthropic = getClient();
+  if (!anthropic) return '(ANTHROPIC_API_KEY not set — no AI analysis available. Raw diff only.)';
+
+  const message = await anthropic.messages.create({
+    model: config.anthropicModel,
+    max_tokens: 1200,
+    messages: [
+      {
+        role: 'user',
+        content:
+          "This is a diff of a Google Flow page's id/class -> visible-text map between two captures. " +
+          'Class names are styled-components hashes (e.g. "sc-abc123-0") that change on every Google rebuild ' +
+          'even when nothing user-visible actually changed — that alone is noise, not real drift. ' +
+          'For each added/removed/changed entry below, decide whether it is (a) pure hash/id churn where the ' +
+          "visible text is unchanged or trivially reformatted (ignore), or (b) a real change — a button's label, " +
+          'a new or removed control, or anything that could break a Playwright locator in flowPage.ts. ' +
+          'Reply with one verdict line ("REAL CHANGE", "NOISE ONLY", or "MIXED"), then a bullet per entry that ' +
+          'matters, saying what changed and whether flowPage.ts likely needs a locator update. Skip entries that ' +
+          'are pure noise instead of listing them all.\n\n' +
+          `--- DIFF ---\n${JSON.stringify(diff, null, 2)}`,
+      },
+    ],
+  });
+
+  const text = message.content.find((b) => b.type === 'text');
+  return text && text.type === 'text' ? text.text : '(no response)';
+}

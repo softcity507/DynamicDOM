@@ -1,6 +1,8 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import type { DomSnapshot } from './domSnapshot.js';
+import { config } from './config.js';
+import { analyzeDomDiff } from './selfHeal.js';
 
 const DATA_DIR = path.resolve('data');
 const DIFF_DIR = path.join(DATA_DIR, 'diffs');
@@ -35,6 +37,13 @@ export function diffSnapshots(previous: DomSnapshot, current: DomSnapshot): Snap
  * `npm run capture-dom`) and, if they differ, save the diff to
  * data/diffs/diff-<timestamp>.json. Pure file comparison — no browser
  * needed, so this can be run any time after two captures.
+ *
+ * id/class hashes churn on every Google rebuild even when nothing
+ * user-visible changed, so a raw key diff alone is noisy. With
+ * ANTHROPIC_API_KEY set, the diff is also handed to Claude (analyzeDomDiff)
+ * to judge which entries are real changes — a renamed/moved button, changed
+ * label text — versus pure hash churn, and saved alongside the raw diff as
+ * diff-<timestamp>-analysis.md.
  */
 export async function runDiff(): Promise<string> {
   let previous: DomSnapshot;
@@ -63,12 +72,22 @@ export async function runDiff(): Promise<string> {
     return 'No DOM data drift detected — id/class -> text map is unchanged.';
   }
 
+  const summary = `+${addedCount} added, -${removedCount} removed, ~${changedCount} changed`;
+
   await mkdir(DIFF_DIR, { recursive: true });
   const diffPath = path.join(DIFF_DIR, `diff-${Date.now()}.json`);
   await writeFile(diffPath, JSON.stringify(diff, null, 2), 'utf8');
 
-  return (
-    `DOM data drift detected: +${addedCount} added, -${removedCount} removed, ~${changedCount} changed.\n` +
-    `Diff saved to ${diffPath}.`
-  );
+  let report = `DOM data drift detected: ${summary}.\nDiff saved to ${diffPath}.`;
+
+  if (config.anthropicApiKey) {
+    const analysis = await analyzeDomDiff(diff);
+    const analysisPath = diffPath.replace(/\.json$/, '-analysis.md');
+    await writeFile(analysisPath, analysis, 'utf8');
+    report += `\n\n${analysis}\n\n(Analysis saved to ${analysisPath}.)`;
+  } else {
+    report += '\nSet ANTHROPIC_API_KEY in .env for an AI judgment on which entries are real vs. hash churn.';
+  }
+
+  return report;
 }
