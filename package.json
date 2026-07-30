@@ -12,7 +12,7 @@
     "inspect": "tsx src/inspect.ts",
     "detect-drift": "tsx src/detectDrift.ts", 
     "capture-dom": "tsx src/captureDom.ts",
-    "capture-dom-diff": "tsx src/diffDom.ts"
+    "capture-flow": "tsx src/flowPage.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

@@ -1,51 +1,54 @@
 - region "Notifications alt+T"
-- list:
-  - listitem:
-    - link "Google Flow":
-      - /url: /fx/tools/flow
-- link "tv Flow TV":
-  - /url: https://labs.google/flow/tv
-- link:
-  - /url: https://discord.com/invite/googlelabs
-  - img
-- link "Instagram Logo":
-  - /url: https://www.instagram.com/googleflow
-  - img "Instagram Logo"
-- link "X (Twitter) Logo":
-  - /url: https://x.com/FlowbyGoogle
-  - img "X (Twitter) Logo"
-- button "help_outlined Flow Help Center Flow Help Center"
-- text: more_vert
+- navigation:
+  - button "arrow_back Go Back"
+  - textbox "Editable text": Jul 30, 02:43 PM
+  - button "more_vert More options"
+- button "search Search"
+- textbox
+- button "filter_list Sort & Filter"
+- button "add Add Media"
+- button "help Product Help"
+- button "settings_2 View Settings"
+- button "more_vert More"
 - button "PRO User profile image":
   - text: PRO
   - img "User profile image"
-- strong: "Daily Bonus:"
-- text: Enjoy 50 extra credits on us until August 31st! (Resets daily)
-- button "close Dismiss Dismiss"
-- heading "A creative partner at every step." [level=2]
-- paragraph: Brainstorming, prompting, batch editing, organizing your media, and more– see what the agent can do for you.
-- button "Try the Google Flow Agent"
-- button "Go to banner 1"
-- button "Go to banner 2"
-- button "Go to banner 3"
-- button "Go to banner 4"
-- button "Go to banner 5"
-- button "Go to banner 6"
-- button "close"
-- link:
-  - /url: /fx/tools/flow/project/a42331b5-79c9-4ae7-b421-f960b2617031
-- text: Jul 30, 11:59 AM
-- button "edit Edit project"
-- button "delete Delete project"
-- link:
-  - /url: /fx/tools/flow/project/25d24922-ba10-429d-8500-610e57a8b926
-- text: Jul 30, 11:42 AM
-- button "edit Edit project"
-- button "delete Delete project"
-- link:
-  - /url: /fx/tools/flow/project/d2be9d8d-a56c-41a2-9faf-83ce9c8f4720
-- text: Jul 30, 10:53 AM
-- button "edit Edit project"
-- button "delete Delete project"
-- button "add_2 New project"
-- alert
+- button "dashboard All Media"
+- text: All Media
+- button "accessibility_new Characters"
+- text: Characters
+- button "movie View scenes"
+- text: Scenes
+- button "apps_spark_2 Tools"
+- text: Tools
+- button "delete View Trash"
+- text: Trash
+- button "left_panel_close Collapse"
+- text: Collapse
+- img "8-bit flower"
+- text: Start creating or drop media
+- separator "Resize agent panel"
+- button "menu History"
+- heading "Untitled session" [level=2]
+- button "edit_square New session"
+- button "close Close"
+- heading "Hi Sadaqat" [level=3]
+- heading "What would you like to do?" [level=3]
+- button "Learn about generation costs Learn about generation costs":
+  - img "Learn about generation costs"
+  - text: Learn about generation costs
+- button "Build a visual moodboard Build a visual moodboard":
+  - img "Build a visual moodboard"
+  - text: Build a visual moodboard
+- button "Turn a concept into prompts Turn a concept into prompts":
+  - img "Turn a concept into prompts"
+  - text: Turn a concept into prompts
+- textbox:
+  - paragraph: What do you want to create?
+- button "add_2 Create"
+- button "article_spark Agent Instructions"
+- button "tune Settings"
+- button "arrow_forward Create" [disabled]
+- status
+- paragraph: Google Flow can make mistakes, so double check it
+- alert: Google Flow - AI Creative Studio for Video, Images & Custom Tools

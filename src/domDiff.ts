@@ -1,19 +1,17 @@
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { DomSnapshot } from './domSnapshot.js';
 import { config } from './config.js';
 import { analyzeDomDiff } from './selfHeal.js';
 
-const DATA_DIR = path.resolve('data');
-const DIFF_DIR = path.join(DATA_DIR, 'diffs');
-const LATEST_PATH = path.join(DATA_DIR, 'latest.json');
-const PREVIOUS_PATH = path.join(DATA_DIR, 'previous.json');
+const DIFF_PATH = path.join(path.resolve('data'), 'diff.json');
 
 export interface SnapshotDiff {
   timestamp: string;
   added: DomSnapshot;
   removed: DomSnapshot;
   changed: Record<string, { before: string; after: string }>;
+  analysis?: string;
 }
 
 export function diffSnapshots(previous: DomSnapshot, current: DomSnapshot): SnapshotDiff {
@@ -33,36 +31,14 @@ export function diffSnapshots(previous: DomSnapshot, current: DomSnapshot): Snap
 }
 
 /**
- * Compare data/previous.json against data/latest.json (both written by
- * `npm run capture-dom`) and, if they differ, save the diff to
- * data/diffs/diff-<timestamp>.json. Pure file comparison — no browser
- * needed, so this can be run any time after two captures.
- *
- * id/class hashes churn on every Google rebuild even when nothing
- * user-visible changed, so a raw key diff alone is noisy. With
- * ANTHROPIC_API_KEY set, the diff is also handed to Claude (analyzeDomDiff)
- * to judge which entries are real changes — a renamed/moved button, changed
- * label text — versus pure hash churn, and saved alongside the raw diff as
- * diff-<timestamp>-analysis.md.
+ * Diff `previous` against `current` and, if they differ, write data/diff.json
+ * — overwritten every run, so it always reflects the most recent change,
+ * never a growing history. With ANTHROPIC_API_KEY set, also asks Claude to
+ * judge which entries are real changes (a moved/renamed button, changed
+ * label) versus pure class-hash churn from a Google rebuild, and folds that
+ * judgment into the same file.
  */
-export async function runDiff(): Promise<string> {
-  let previous: DomSnapshot;
-  try {
-    previous = JSON.parse(await readFile(PREVIOUS_PATH, 'utf8')) as DomSnapshot;
-  } catch {
-    return (
-      `No previous snapshot at ${PREVIOUS_PATH} yet. Run \`npm run capture-dom\` twice ` +
-      '(once to establish a baseline, again later to capture what changed) before diffing.'
-    );
-  }
-
-  let current: DomSnapshot;
-  try {
-    current = JSON.parse(await readFile(LATEST_PATH, 'utf8')) as DomSnapshot;
-  } catch {
-    return `No current snapshot at ${LATEST_PATH} yet. Run \`npm run capture-dom\` first.`;
-  }
-
+export async function saveDiffIfChanged(previous: DomSnapshot, current: DomSnapshot): Promise<string> {
   const diff = diffSnapshots(previous, current);
   const addedCount = Object.keys(diff.added).length;
   const removedCount = Object.keys(diff.removed).length;
@@ -74,20 +50,16 @@ export async function runDiff(): Promise<string> {
 
   const summary = `+${addedCount} added, -${removedCount} removed, ~${changedCount} changed`;
 
-  await mkdir(DIFF_DIR, { recursive: true });
-  const diffPath = path.join(DIFF_DIR, `diff-${Date.now()}.json`);
-  await writeFile(diffPath, JSON.stringify(diff, null, 2), 'utf8');
-
-  let report = `DOM data drift detected: ${summary}.\nDiff saved to ${diffPath}.`;
-
   if (config.anthropicApiKey) {
-    const analysis = await analyzeDomDiff(diff);
-    const analysisPath = diffPath.replace(/\.json$/, '-analysis.md');
-    await writeFile(analysisPath, analysis, 'utf8');
-    report += `\n\n${analysis}\n\n(Analysis saved to ${analysisPath}.)`;
-  } else {
-    report += '\nSet ANTHROPIC_API_KEY in .env for an AI judgment on which entries are real vs. hash churn.';
+    diff.analysis = await analyzeDomDiff(diff);
   }
+
+  await writeFile(DIFF_PATH, JSON.stringify(diff, null, 2), 'utf8');
+
+  let report = `DOM data drift detected: ${summary}.\nDiff saved to ${DIFF_PATH}.`;
+  report += diff.analysis
+    ? `\n\n${diff.analysis}`
+    : '\nSet ANTHROPIC_API_KEY in .env for an AI judgment on which entries are real vs. hash churn.';
 
   return report;
 }
